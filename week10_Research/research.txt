@@ -1,0 +1,108 @@
+일반 함수와 화살표 함수는 this에 바인딩 되는 객체, arguments 객체를 통해서 인자들을 배열 형태로 받을 수 있는지,
+생성자 함수 사용 가능 여부에 차이가 있다.
+
+1.	This
+1)	일반 함수
+일반 함수는 this에 바인딩할 객체가 함수 호출 시에 결정된다. 아래는 this가 바인딩 되는 3가지 상황이다. 
+1.	함수 실행 시에는 전역(window) 객체를 가리킴
+	function func1(){
+	    console.log(this);
+	}
+	
+	func1();
+
+2. 	메소드 실행 시에는 메소드를 소유하고 있는 객체를 가리킨다
+    const obj ={
+    name:'짱구',
+    method() {
+        console.log(this.name); // 짱구
+    }
+}
+2번의 결과는 name의 값인 '짱구' 가 출력되는데, 본인이 종속된 객체를 this로 가리키기 떄문이다. 
+
+3.	생성자 실행시에는 새롭게 만들어진 객체를 가리킴
+    function funcFactory() {
+    console.log(this);
+}
+
+new funcFactory(); //funcFactory
+
+2)	화살표 함수
+화살표 함수는 자신의 this를 바인딩 하지 않고, 상위 스코프의 this를 가리킨다.
+let myObj= {
+    age:20,
+    arrowFunc : () => {
+        console.log(this.age);
+    },
+    normalFunc() {
+        console.log(this.age);
+    }
+}
+
+myObj.arrowFunc();// Cannot read properties of undefined (reading 'age')
+myObj.normalFunc(); // 20
+
+위 코드를 보면 화살표 함수의 결과는 undefined이지만, 일반 함수의 경우 20을 불러온다.
+그 이유는 화살표 함수에서 'this'는 함수가 정의된 곳의 상위 스코프에서 상속받아 사용하기 때문이다.
+'arrowFunc' 함수는 'myObj' 객체에서 정의되었지만, 'this' 가 상속되는 것은 'arrowFunc' 가 정의된 곳이 아닌
+'myObj' 객체의 상위 스코프, 즉 전역 객체(window 객체)이다. 전역 객체에는 age 속성이 없기 때문에 age 속성을 
+읽을 수 없다는 오류 메시지가 뜨는 것이다. 
+
+
+따라서 위와 같은 차이 때문에 객체 안에서 메소드 함수를 정의할 경우에는 일반 함수를 사용해서 객체 인스턴스 자체를 
+가리키는 'this'를 사용해야 한다.
+
+2. Arguments
+
+JavaScript의 함수 내부에서는 'arguments' 라는 특별한 객체를 사용하여 인자들을 배열 형태로 다룰 수 있다.
+함수 호출 시 인자들을 포함하는 유사 배열 객체이다. 그러나 화살표 함수에서는 'arguments' 를 사용할 수 없다.
+화살표 함수에서는 'this'와 마찬가지로 함수 자체의 바인딩이 없기 때문이다. 화살표 함수에서는 'arguments' 대신에
+'rest' 파라미터를 이용하여 인자들을 배열 형태로 받는다. 'rest' 파라미터는 '...' 연산자를 이용해 정의한다.
+아래는 예시 코드이다. 
+
+function regularFunc() {
+    console.log(arguments);
+}
+
+const arrowFunc = (...args) => {
+    console.log(args);
+}
+
+regularFunc(1,2,3);
+
+arrowFunc(1,2,3);
+
+따라서, 화살표 함수에서는 'arguments' 대신 'rest' 파라미터를 사용하여 인자를 다루어야 한다.
+
+3. 생성자 함수 가능 여부
+
+생성자 함수는 객체를 생성할 때 사용하는 함수로, 생성자 함수를 사용하면 객체를 쉽게 생성하고 초기화 할 수 있다.
+생성자 함수는 'new' 연산자와 함께 호출하며, 생성자 함수 내부에서 'this' 는 새로 생성된 인스턴스를 가리킨다. 
+따라서 생성자 함수 내부에서 'this'를 이용해 새로 선언된 객체의 속성을 초기화 할 수 있다. 다음은 예시 코드이다.
+
+function Person(name,age){
+    this.name=name;
+    this.age=age;
+}
+
+const person1=new Person('김정혜',23);
+
+console.log(person1.name,person1.age);
+
+하지만 화살표 함수에서는 생성자 함수를 사용할 수 없다. 화살표 함수에서 'this' 가 바인딩 되는 방식 때문이다. 
+화살표 함수에서의 'this'는 상위 스코프인 window 객체를 가리키기 때문에 
+this를 사용해서 생성된 객체를 참조할 수 없다. 아래와 같이 'arrow_person' 함수를 화살표 함수로 정의하면 'new'
+연산자와 함께 호출할 수 없다. 'arrow_person is not a constructor' 라는 TypeError 가 발생한다.
+
+
+
+const arrow_person = (name, age) => {
+    this.name = name;
+    this.age = age;
+  };
+  
+const person2 = new arrow_person('김정혜', 23); // TypeError: arrow_person is not a constructor
+  
+따라서 생성자 함수를 사용할 때는 일반 함수를 사용하도록 주의해야 한다. 
+
+
