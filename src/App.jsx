@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 
 
@@ -8,6 +8,29 @@ function App() {
   const [row,setRow]=useState([]);
   const [isLoading,setIsLoading]=useState(false); // 데이터 로딩 상태
 
+  //mount, update
+  useEffect(() => {
+    console.log('mount or update');
+      })
+
+  //mount 될 때만 출력 
+  useEffect(() => {
+    console.log('mount only');
+  },[]);
+
+  // row 업데이트 추적 
+  useEffect(() => {
+    console.log('update only',row);
+  },[row]); //row가 업데이트 되었을 때만 실행
+
+
+  useEffect(() =>{
+    console.log('mount or update');
+
+    return () => {
+      console.log('unmount');
+    }
+  })
   const dataLoad = () =>{
     
     if (row.length===0){ // 아직 row에 데이터가 없을 경우에만 
@@ -23,6 +46,7 @@ function App() {
       
     }
   };
+
 
     return(
       <div>
