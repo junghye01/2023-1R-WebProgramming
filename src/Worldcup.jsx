@@ -1,6 +1,8 @@
 
 import { useEffect, useState } from 'react'
 import './Worldcup.css'
+import arrayRandomize from './utils/arrayRandomize.js'
+import Barchart from './Chart.jsx';
 
 const candidate = [
     { name: '꼬똥 드 툴레아', src: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQyUPgeg9vugQzv_TRNSVfmdpHqTU_kGCVeew&usqp=CAU' },
@@ -21,6 +23,12 @@ const candidate = [
     { name: '페키니즈', src: 'https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2FctBOP2%2FbtqI2lg22qW%2FdjOw7nZZpSJ6klmrZr2W71%2Fimg.png' }
 ];
 
+const dict = {};
+const dict2stat = candidate.map(function (item) {
+    dict[item.name] = 0
+})
+
+
 
 function Worldcup() {
 
@@ -28,43 +36,83 @@ function Worldcup() {
     const [round, setRound] = useState(0);
     const [nextGame, setNextGame] = useState([]);
     const [selectedImage, setSelectedImage] = useState(null);
+    const [stat, setStat] = useState(dict);
+    const [renderBar,setrenderBar]=useState(false);
 
-
+    // 처음 Worldcup 컴포넌트가 단 한 번 실행하는 함수 
+    // 시작할 때 2번 실행됨 -> 그 이후 실행 x 
     useEffect(() => {
-        setGame(candidate.map(c => {
-            return { name: c.name, src: c.src, order: Math.random() }
-        }).sort((l, r) => {
-            return l.order - r.order;
-        }));
+        
+        const 월드컵LocalStorageData = localStorage.getItem('2020112092'); // localStorage의 key의 value값은 string 형태만 
+        if (월드컵LocalStorageData) { // 로컬에 데이터 있으면
+            const new월드컵Data=JSON.parse(월드컵LocalStorageData); 
+            setStat(new월드컵Data); // stat -> 기존 데이터 넣어줌 !!! 모든 게임의 통계 내기 위해서 
+        }
+
+        setGame(arrayRandomize(candidate)); // 현재 게임 등장 순서 setting 
     }, []);
 
-    useEffect(() => {
+
+    useEffect(() => { // e.g. 16강 : 8, 8강 : 4 , 4강:2 , 뒤가 라운드 수 
         if (game.length > 1 && round + 1 > game.length / 2) {
-            setGame(nextGame);
-            setNextGame([]);
+            setGame(nextGame); // 다음 라운드 진출자 
+            setNextGame([]); // 
             setRound(0);
         }
-    }, [round]);
+    }, [round]); 
 
     const handleImageClick = (index) => {
         setSelectedImage(game[index]);
         setNextGame((prev) => prev.concat(game[index]));
-        
+
+        setStat({
+            ...stat,
+            [game[index].name]: stat[game[index].name] + 1
+        });
+
         setTimeout(() => {
-            setRound((round)=>round+1);
+            setRound((round) => round + 1);
             setSelectedImage(null);
+
         }, 3000);
 
     }
+    
+    useEffect(()=>{
+        if(game.length==1){
+            const ordered=Object.fromEntries(Object.entries(stat).sort((a,b)=>b[1]-a[1]));
+            setStat(ordered);
+            setrenderBar(true);
+            
+        }
+    },[game]); 
 
-    if (game.length === 1) {
+    if (game.length === 1 && renderBar ===true) {
+        
+        
+       
+        localStorage.setItem('2020112092', JSON.stringify(stat)); // 종료 시 localStorage에 string 형태로 저장 
         return <div>
             <p>이상형 월드컵 우승</p>
-            <img src={game[0].src} /> <p>{game[0].name}</p>
+            <img src={game[0].src} /> <p>{game[0].name}</p> <p>{stat[game[0].name]} 번 승리 </p>
+
+            <table>
+                <tbody>
+                {Object.keys(stat).map(name => { //Object.keys(stat) : stat에 있는 키 값만 배열로 저장 
+                    return <tr key={name}><td>{name}</td><td>{stat[name]}</td></tr> //stat의 key(name) 과 value
+                })}
+                </tbody>
+                
+            </table>
+            <Barchart data={stat}/>
+          
+
         </div>
     }
     if (game.length === 0 || round + 1 > game.length / 2) return <p>로딩중입니다</p>;
+    //console.log(stat);
     return (
+        
         <div className="ibox-content">
             <p className='gameTitle'>강아지 이상형 월드컵 {round + 1} / {game.length / 2} <b>{game.length === 2 ? "결승" : game.length + "강"}</b></p>
             {selectedImage === null ? (
@@ -74,6 +122,7 @@ function Worldcup() {
                     <div className="wleft">
                         <p className="wleft-text"><b>{game[round * 2].name}</b></p>
                         <img src={game[round * 2].src} onClick={() => handleImageClick(round * 2)} />
+
                     </div>
                     <div className="wright">
                         <p className="wright-text"><b>{game[round * 2 + 1].name}</b></p>
